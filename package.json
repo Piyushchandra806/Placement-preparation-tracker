@@ -2,16 +2,25 @@
   "name": "mission90",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node scripts/comprehensive-audit.mjs && node scripts/test-secure-authentication.mjs",
+    "test:auth": "node scripts/test-secure-authentication.mjs",
+    "test:all": "node scripts/comprehensive-audit.mjs && node scripts/test-secure-authentication.mjs && node scripts/test-task-completion-flow.mjs && node scripts/test-first-7-days-and-subjects.mjs && node scripts/test-reminder-system.mjs"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "jsonwebtoken": "^9.0.3",
+    "lucide-react": "^1.57.0",
+    "mongoose": "^9.11.2",
     "next": "16.4.0",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
