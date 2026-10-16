@@ -5,15 +5,11 @@ import DailyProgress from '@/models/DailyProgress';
 import StudyPlan from '@/models/StudyPlan';
 import { getAuthUser } from '@/lib/auth';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-helpers';
-import { calculateWeightedDailyScore, groupTaskStatsByCategory } from '@/lib/scoring';
-
-function getTodayString() {
-  const d = new Date();
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
+import {
+  getComprehensiveProgressMetrics,
+  getUserLocalDateString,
+  getDateForDayNumber,
+} from '@/lib/activity-tracker';
 
 /**
  * GET /api/tasks/[id]
@@ -54,7 +50,7 @@ export async function GET(request, { params }) {
 /**
  * PATCH /api/tasks/[id]
  * Updates task completion status, records completion timestamp,
- * recalculates weighted daily score, subject progress, and overall progress.
+ * recalculates weighted daily score, subject progress, activity heatmap, and overall progress.
  */
 export async function PATCH(request, { params }) {
   try {
@@ -90,47 +86,30 @@ export async function PATCH(request, { params }) {
     task.completedAt = completed ? new Date() : null;
     await task.save();
 
-    // 3. Determine current study day from study plan
-    const activePlan = await StudyPlan.findById(task.studyPlanId).lean();
-    let currentDay = task.dayNumber;
-    if (activePlan && activePlan.startDate) {
-      const start = new Date(activePlan.startDate);
-      start.setHours(0, 0, 0, 0);
-      const now = new Date();
-      now.setHours(0, 0, 0, 0);
-      const dayDiff = Math.floor((now - start) / (1000 * 60 * 60 * 24)) + 1;
-      currentDay = Math.max(1, Math.min(dayDiff, activePlan.duration || 90));
-    }
+    // 3. Compute comprehensive authoritative progress metrics from MongoDB
+    const metrics = await getComprehensiveProgressMetrics(auth.user.id);
 
-    // Fetch today's tasks to compute live today score and completion percentage
-    const todayTasks = await Task.find({
+    // 4. Upsert DailyProgress record for the task's corresponding calendar date
+    const taskDateStr = getDateForDayNumber(metrics.startDate, task.dayNumber);
+    const dayTasks = await Task.find({
       studyPlanId: task.studyPlanId,
-      dayNumber: currentDay,
+      dayNumber: task.dayNumber,
     }).lean();
 
-    const todayCategoryStats = groupTaskStatsByCategory(todayTasks);
-    const todayDailyScore = calculateWeightedDailyScore(todayCategoryStats);
-    const todayTotalTasks = todayTasks.length;
-    const todayCompletedCount = todayTasks.filter((t) => t.completed).length;
-    const todayCompletionPct =
-      todayTotalTasks > 0
-        ? Math.round((todayCompletedCount / todayTotalTasks) * 100)
-        : 0;
+    const dayTotalTasks = dayTasks.length;
+    const dayCompletedCount = dayTasks.filter((t) => t.completed).length;
 
-    const todayStr = getTodayString();
-
-    // 4. Upsert DailyProgress record for today
     const updatedDailyProgress = await DailyProgress.findOneAndUpdate(
       {
         userId: auth.user.id,
         studyPlanId: task.studyPlanId,
-        date: todayStr,
+        date: taskDateStr,
       },
       {
         $set: {
-          completedTasks: todayCompletedCount,
-          totalTasks: todayTotalTasks,
-          dailyScore: todayDailyScore,
+          completedTasks: dayCompletedCount,
+          totalTasks: dayTotalTasks,
+          dailyScore: task.dayNumber === metrics.currentDay ? metrics.dailyScore : Math.round((dayCompletedCount / dayTotalTasks) * 100),
         },
         ...(typeof actualMinutes === 'number' && actualMinutes > 0
           ? { $inc: { actualStudyMinutes: actualMinutes } }
@@ -143,44 +122,6 @@ export async function PATCH(request, { params }) {
       }
     );
 
-    // 5. Compute real-time overall study-plan statistics
-    const [totalUserTasks, completedUserTasks, overduePendingTasks] = await Promise.all([
-      Task.countDocuments({ userId: auth.user.id }),
-      Task.countDocuments({ userId: auth.user.id, completed: true }),
-      Task.countDocuments({
-        userId: auth.user.id,
-        completed: false,
-        dayNumber: { $lt: currentDay },
-      }),
-    ]);
-
-    const pendingTasks = Math.max(0, totalUserTasks - completedUserTasks);
-    const overallProgress =
-      totalUserTasks > 0
-        ? Math.round((completedUserTasks / totalUserTasks) * 100)
-        : 0;
-
-    // Subject breakdown
-    const subjectList = ['dsa', 'quant', 'reasoning', 'english', 'revision'];
-    const subjectsMetrics = await Promise.all(
-      subjectList.map(async (subj) => {
-        const [total, comp] = await Promise.all([
-          Task.countDocuments({ userId: auth.user.id, subject: subj }),
-          Task.countDocuments({
-            userId: auth.user.id,
-            subject: subj,
-            completed: true,
-          }),
-        ]);
-        return {
-          subject: subj,
-          totalTasks: total,
-          completedTasks: comp,
-          progressPercentage: total > 0 ? Math.round((comp / total) * 100) : 0,
-        };
-      })
-    );
-
     return successResponse({
       message: completed ? 'Task marked as completed' : 'Task marked as incomplete',
       task: {
@@ -188,24 +129,13 @@ export async function PATCH(request, { params }) {
         id: task._id.toString(),
       },
       dailyProgress: {
-        ...updatedDailyProgress.toObject(),
-        id: updatedDailyProgress._id.toString(),
-        dailyCompletionPct: todayCompletionPct,
-        categoryStats: todayCategoryStats,
-        dailyScore: todayDailyScore,
+        ...(updatedDailyProgress ? updatedDailyProgress.toObject() : {}),
+        id: updatedDailyProgress?._id?.toString(),
+        dailyCompletionPct: metrics.dailyCompletionPct,
+        categoryStats: metrics.categoryStats,
+        dailyScore: metrics.dailyScore,
       },
-      overallStats: {
-        currentDay,
-        overallProgress,
-        totalTasks: totalUserTasks,
-        completedTasks: completedUserTasks,
-        pendingTasks,
-        overduePendingTasks,
-        dailyScore: todayDailyScore,
-        dailyCompletionPct: todayCompletionPct,
-        categoryStats: todayCategoryStats,
-        subjects: subjectsMetrics,
-      },
+      overallStats: metrics,
     });
   } catch (error) {
     return handleApiError(error, 'Failed to update task completion');
