@@ -23,8 +23,8 @@ export default function ProgressPage() {
             <BarChart3 size={20} className="text-[var(--accent)]" />
             <h1 className="text-2xl font-bold tracking-tight">Progress Analytics</h1>
           </div>
-          <p className="text-sm text-[var(--text-secondary)]">
-            Real-time MongoDB Atlas progress tracking &amp; weighted daily scoring
+          <p className="text-xs text-[var(--text-secondary)]">
+            Performance analytics &amp; subject mastery
           </p>
         </div>
 

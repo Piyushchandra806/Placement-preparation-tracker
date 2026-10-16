@@ -7,7 +7,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Lock, Mail, ArrowRight, Sparkles, ShieldCheck, AlertCircle, Loader2 } from "lucide-react";
+import { Lock, Mail, ArrowRight, ShieldCheck, AlertCircle, Loader2 } from "lucide-react";
 import { useProgress } from "@/context/ProgressContext";
 
 function LoginForm() {
@@ -15,13 +15,12 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const redirectPath = searchParams.get("redirect") || "/";
 
-  const { user, login, autoLoginDemoUser, isAuthLoading } = useProgress();
+  const { user, login, isAuthLoading } = useProgress();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDemoSubmitting, setIsDemoSubmitting] = useState(false);
 
   // If already logged in, immediately redirect to target destination
   useEffect(() => {
@@ -54,19 +53,6 @@ function LoginForm() {
     }
   }
 
-  async function handleDemoLogin() {
-    setError("");
-    setIsDemoSubmitting(true);
-    try {
-      await autoLoginDemoUser();
-      router.replace(redirectPath);
-    } catch (err) {
-      setError(err.message || "Failed to log in as demo candidate");
-    } finally {
-      setIsDemoSubmitting(false);
-    }
-  }
-
   return (
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-[var(--bg-warm)] via-[var(--bg-warm-alt)] to-[var(--bg-warm)]">
       {/* Background ambient decorative blurs */}
@@ -87,32 +73,8 @@ function LoginForm() {
               Sign In to Mission <span className="text-[var(--accent)]">90</span>
             </h1>
             <p className="text-xs sm:text-sm text-[var(--text-secondary)] dark:text-zinc-400 mt-1">
-              Access your personal 90-day placement preparation study plan
+              Sign in to your account
             </p>
-          </div>
-
-          {/* 1-Click Demo Candidate Login */}
-          <button
-            type="button"
-            onClick={handleDemoLogin}
-            disabled={isSubmitting || isDemoSubmitting}
-            className="w-full mb-5 py-3 px-4 rounded-2xl bg-gradient-to-r from-[var(--accent)] to-rose-600 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 hover:opacity-95 shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-50"
-          >
-            {isDemoSubmitting ? (
-              <Loader2 size={16} className="animate-spin text-white" />
-            ) : (
-              <Sparkles size={16} className="text-white" />
-            )}
-            <span>Sign In as Piyush (1-Click Demo Candidate)</span>
-          </button>
-
-          {/* Divider */}
-          <div className="flex items-center gap-3 my-5">
-            <div className="flex-1 h-px bg-black/[0.08] dark:bg-white/10" />
-            <span className="text-[10px] uppercase font-bold text-[var(--text-tertiary)] dark:text-zinc-400 tracking-wider">
-              Or sign in with email
-            </span>
-            <div className="flex-1 h-px bg-black/[0.08] dark:bg-white/10" />
           </div>
 
           {/* Error Banner */}
@@ -168,7 +130,7 @@ function LoginForm() {
             {/* High-Contrast Sign In Button */}
             <button
               type="submit"
-              disabled={isSubmitting || isDemoSubmitting}
+              disabled={isSubmitting}
               className="w-full mt-2 py-3.5 px-4 rounded-2xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 hover:bg-zinc-800 dark:hover:bg-zinc-100 shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (

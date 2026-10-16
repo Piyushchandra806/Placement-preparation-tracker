@@ -16,16 +16,12 @@ import {
   Calendar,
   Sparkles,
   ChevronRight,
-  ShieldCheck,
-  ShieldAlert,
 } from "lucide-react";
 import { useReminder } from "@/context/ReminderContext";
 
 export default function ReminderNotificationDrawer() {
   const router = useRouter();
   const {
-    permission,
-    isSupported,
     settings,
     tasksOverview,
     reminders,
@@ -36,8 +32,6 @@ export default function ReminderNotificationDrawer() {
     setActiveMissedGoal,
     loading,
     statusMessage,
-    requestPermission,
-    triggerTestReminder,
     markAsRead,
     dismissReminder,
     carryForward,
@@ -74,24 +68,24 @@ export default function ReminderNotificationDrawer() {
               </button>
             </div>
 
-            <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-800/40 mb-4 text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
+            <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-800/40 mb-3 text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
               <p className="font-semibold mb-1">
-                {activeMissedGoal.pendingTaskCount || "Some"} target task(s) remained incomplete.
+                {activeMissedGoal.pendingTaskCount || 0} task(s) remained incomplete.
               </p>
               <p className="text-amber-800 dark:text-amber-300">
-                All tasks you finished have been safely recorded and credited toward your 90-day progress. Unfinished tasks can be carried forward into your pending backlog.
+                You can carry them forward into your pending tasks.
               </p>
             </div>
 
-            <div className="space-y-2 mb-5">
+            <div className="space-y-1.5 mb-4">
               <div className="flex items-center justify-between text-xs py-1.5 px-3 rounded-xl bg-black/[0.02] dark:bg-white/[0.04]">
                 <span className="text-[var(--text-secondary)] dark:text-zinc-400">Completed Tasks:</span>
-                <span className="font-semibold text-emerald-600 dark:text-emerald-400">Preserved in MongoDB</span>
+                <span className="font-semibold text-emerald-600 dark:text-emerald-400">Recorded</span>
               </div>
               <div className="flex items-center justify-between text-xs py-1.5 px-3 rounded-xl bg-black/[0.02] dark:bg-white/[0.04]">
                 <span className="text-[var(--text-secondary)] dark:text-zinc-400">Unfinished Tasks:</span>
                 <span className="font-semibold text-amber-600 dark:text-amber-400">
-                  {activeMissedGoal.pendingTaskCount || 0} tasks to review
+                  {activeMissedGoal.pendingTaskCount || 0} tasks
                 </span>
               </div>
             </div>
@@ -138,64 +132,22 @@ export default function ReminderNotificationDrawer() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="font-bold text-base tracking-tight text-[var(--foreground)]">Reminders &amp; Alerts</h2>
+                    <h2 className="font-bold text-base tracking-tight text-[var(--foreground)]">Notifications</h2>
                     {unreadCount > 0 && (
                       <span className="px-2 py-0.5 rounded-full bg-[var(--accent)] text-white text-[10px] font-bold">
                         {unreadCount} new
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-[var(--text-secondary)] dark:text-zinc-400">
-                    Daily 8:30 PM reminder &amp; mission alerts
-                  </p>
                 </div>
               </div>
               <button
                 onClick={() => setIsDrawerOpen(false)}
-                className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors"
+                className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors cursor-pointer"
                 aria-label="Close reminders"
               >
                 <X size={18} />
               </button>
-            </div>
-
-            {/* Quick Status Bar */}
-            <div className="px-5 py-3 bg-black/[0.02] dark:bg-white/[0.03] border-b border-black/[0.04] dark:border-white/10 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                {permission === "granted" ? (
-                  <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold">
-                    <ShieldCheck size={14} /> Web Push Active
-                  </span>
-                ) : permission === "denied" ? (
-                  <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-semibold" title="Browser notifications blocked. In-app alerts fallback active.">
-                    <ShieldAlert size={14} /> In-App Fallback
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1.5 text-[var(--text-secondary)] dark:text-zinc-400 font-medium">
-                    <Clock size={14} /> Push Inactive
-                  </span>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                {permission !== "granted" && isSupported && (
-                  <button
-                    onClick={requestPermission}
-                    disabled={loading}
-                    className="text-[11px] font-bold text-[var(--accent)] hover:underline"
-                  >
-                    Enable Push
-                  </button>
-                )}
-                <button
-                  onClick={triggerTestReminder}
-                  disabled={loading}
-                  className="text-[11px] font-semibold text-[var(--text-secondary)] dark:text-zinc-400 hover:text-[var(--foreground)] dark:hover:text-white"
-                  title="Test notification"
-                >
-                  Test
-                </button>
-              </div>
             </div>
 
             {/* Status Message / Notification */}
@@ -212,41 +164,6 @@ export default function ReminderNotificationDrawer() {
                 <span>{statusMessage.text}</span>
               </div>
             )}
-
-            {/* Today's Tasks Direct Action Card */}
-            <div className="p-4 m-5 mb-2 rounded-2xl bg-gradient-to-br from-[var(--accent-bg)]/60 to-white/80 dark:from-[var(--accent-bg)]/30 dark:to-white/[0.04] border border-[var(--accent)]/20 dark:border-white/10 shadow-2xs">
-              <div className="flex items-start justify-between">
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--accent)]">
-                    Today&apos;s Mission
-                  </span>
-                  <h4 className="text-sm font-bold mt-0.5 text-[var(--foreground)]">
-                    {tasksOverview.todayPendingCount > 0
-                      ? `${tasksOverview.todayPendingCount} tasks pending today`
-                      : "All tasks completed today! 🎉"}
-                  </h4>
-                  <p className="text-[11px] text-[var(--text-secondary)] dark:text-zinc-400 mt-0.5">
-                    Target reminder configured for {settings.reminderTime || "20:30"} ({settings.timezone || "Local"})
-                  </p>
-                </div>
-
-                <div className="w-9 h-9 rounded-xl bg-white dark:bg-white/10 shadow-xs flex items-center justify-center font-bold text-xs text-[var(--foreground)]">
-                  {tasksOverview.todayCompletedCount}/{tasksOverview.todayTotalCount}
-                </div>
-              </div>
-
-              {/* Direct Open Button */}
-              <button
-                onClick={() => {
-                  setIsDrawerOpen(false);
-                  router.push("/#todays-mission");
-                }}
-                className="mt-3 w-full py-2 px-3 rounded-xl bg-white dark:bg-white/[0.08] border border-[var(--accent)]/30 dark:border-white/15 text-[var(--accent)] font-semibold text-xs flex items-center justify-center gap-1.5 hover:bg-[var(--accent)] hover:text-white transition-all shadow-2xs"
-              >
-                <span>Open Today&apos;s Tasks Directly</span>
-                <ArrowRight size={13} />
-              </button>
-            </div>
 
             {/* Filter Tabs */}
             <div className="px-5 pt-2 pb-1 flex items-center gap-2 text-xs">

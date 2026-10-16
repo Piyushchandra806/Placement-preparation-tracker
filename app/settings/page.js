@@ -7,18 +7,11 @@ import { useState } from "react";
 import AppShell from "@/components/layout/AppShell";
 import {
   Settings,
-  User,
-  Bell,
   Moon,
   Sun,
   Clock,
-  Shield,
-  HelpCircle,
   LogOut,
   ChevronRight,
-  Palette,
-  Download,
-  Target,
   LogIn,
 } from "lucide-react";
 import { useProgress } from "@/context/ProgressContext";
@@ -54,51 +47,17 @@ export default function SettingsPage() {
 
   const settingsSections = [
     {
-      title: "Account",
-      items: [
-        {
-          icon: User,
-          label: "Profile",
-          subtitle: `${user?.name || "Piyush"} (${user?.email || "piyush@mission90.com"})`,
-          hasChevron: true,
-          onClick: () => setIsAuthModalOpen(true),
-        },
-        {
-          icon: Target,
-          label: "Goal",
-          subtitle: `Day ${stats.currentDay} of ${stats.totalDays} · ${stats.overallProgress}% complete`,
-          hasChevron: true,
-        },
-      ],
-    },
-    {
       title: "Preferences",
       items: [
         {
-          icon: Bell,
-          label: "Reminders & Web Push",
-          subtitle: "Configured above (Default 8:30 PM)",
-          hasChevron: true,
-          onClick: () =>
-            document.getElementById("reminders")?.scrollIntoView({ behavior: "smooth" }),
-        },
-        {
           icon: isDarkMode ? Sun : Moon,
           label: "Dark Mode",
-          subtitle: isDarkMode ? "Enabled (Apple Obsidian Dark)" : "Off (Warm Off-White Canvas)",
+          subtitle: isDarkMode ? "On" : "Off",
           hasToggle: true,
           toggleOn: isDarkMode,
           onClick: toggleDarkMode,
         },
         { icon: Clock, label: "Study Target", subtitle: "3 hours daily target", hasChevron: true },
-        { icon: Palette, label: "Accent Color", subtitle: "Coral Red", hasChevron: true },
-      ],
-    },
-    {
-      title: "Data & Storage",
-      items: [
-        { icon: Download, label: "Export Progress", subtitle: "MongoDB Atlas synchronized", hasChevron: true },
-        { icon: Shield, label: "Privacy & Cloud", subtitle: "MongoDB Atlas M0 Free Cluster", hasChevron: true },
       ],
     },
     {
@@ -111,7 +70,12 @@ export default function SettingsPage() {
               subtitle: "Sign out and return to candidate login",
               hasChevron: true,
               danger: true,
-              onClick: logout,
+              onClick: async () => {
+                await logout();
+                if (typeof window !== "undefined") {
+                  window.location.href = "/login";
+                }
+              },
             },
           ]
         : [
@@ -120,7 +84,11 @@ export default function SettingsPage() {
               label: "Sign In",
               subtitle: "Access your cloud study plan & progress",
               hasChevron: true,
-              onClick: () => setIsAuthModalOpen(true),
+              onClick: () => {
+                if (typeof window !== "undefined") {
+                  window.location.href = "/login";
+                }
+              },
             },
           ],
     },
@@ -135,8 +103,8 @@ export default function SettingsPage() {
             <Settings size={20} className="text-[var(--accent)]" />
             <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
           </div>
-          <p className="text-sm text-[var(--text-secondary)]">
-            Account preferences &amp; cloud synchronization
+          <p className="text-xs text-[var(--text-secondary)]">
+            Account preferences
           </p>
         </div>
 
@@ -147,13 +115,13 @@ export default function SettingsPage() {
         >
           <div className="w-14 h-14 rounded-2xl bg-[var(--accent-bg)] flex items-center justify-center">
             <span className="text-2xl font-bold text-[var(--accent)]">
-              {user?.name ? user.name.charAt(0).toUpperCase() : "P"}
+              {user?.name ? user.name.charAt(0).toUpperCase() : "C"}
             </span>
           </div>
           <div className="flex-1">
-            <h2 className="text-lg font-bold">{user?.name || "Piyush Candidate"}</h2>
+            <h2 className="text-lg font-bold">{user?.name || "Candidate"}</h2>
             <p className="text-xs text-[var(--text-secondary)]">
-              Day {stats.currentDay} of {stats.totalDays} · {stats.overallProgress}% complete · {user?.email || "piyush@mission90.com"}
+              Day {stats.currentDay} of {stats.totalDays} · {stats.overallProgress}% complete{user?.email ? ` · ${user.email}` : ""}
             </p>
           </div>
           <ChevronRight size={18} className="text-[var(--text-tertiary)]" />

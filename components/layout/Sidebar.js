@@ -203,7 +203,11 @@ export default function Sidebar() {
           ) : (
             <button
               type="button"
-              onClick={() => setIsAuthModalOpen(true)}
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  window.location.href = "/login";
+                }
+              }}
               title="Sign In"
               className="p-1.5 rounded-xl text-zinc-900 dark:text-white hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors cursor-pointer"
               aria-label="Sign In"

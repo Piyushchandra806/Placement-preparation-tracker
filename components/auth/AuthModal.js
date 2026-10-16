@@ -1,6 +1,5 @@
 /**
- * AuthModal — Apple-inspired frosted glass modal for Sign In, Registration,
- * and 1-Click Demo Account Login.
+ * AuthModal — Apple-inspired frosted glass modal for Sign In and Registration.
  */
 "use client";
 
@@ -11,7 +10,6 @@ import {
   Mail,
   User as UserIcon,
   X,
-  Sparkles,
   ArrowRight,
   ShieldCheck,
   Check,
@@ -24,7 +22,6 @@ export default function AuthModal() {
     setIsAuthModalOpen,
     login,
     register,
-    autoLoginDemoUser,
     isAuthLoading,
   } = useProgress();
 
@@ -70,19 +67,6 @@ export default function AuthModal() {
     }
   }
 
-  async function handleQuickDemo() {
-    setFormError("");
-    setSubmitting(true);
-    try {
-      await autoLoginDemoUser();
-      setIsAuthModalOpen(false);
-    } catch (err) {
-      setFormError(err.message || "Failed to log in as demo candidate");
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-md animate-fade-in">
       <div className="relative w-full max-w-md p-6 sm:p-7 shadow-2xl rounded-3xl border border-black/10 dark:border-white/15 bg-white/95 dark:bg-[#16161e]/95 backdrop-blur-2xl animate-fade-in-up">
@@ -104,31 +88,8 @@ export default function AuthModal() {
             {mode === "login" ? "Sign In to Mission 90" : "Create Candidate Account"}
           </h2>
           <p className="text-xs text-[var(--text-secondary)] dark:text-zinc-400 mt-1">
-            Track your 90-day progress, weighted daily score &amp; streak on MongoDB Atlas
+            Track your 90-day preparation and daily streak
           </p>
-        </div>
-
-        {/* 1-Click Demo Login Button */}
-        <button
-          type="button"
-          onClick={handleQuickDemo}
-          disabled={submitting || isAuthLoading}
-          className="w-full mb-4 py-3 px-4 rounded-2xl bg-gradient-to-r from-[var(--accent)] to-rose-600 text-white font-bold text-xs flex items-center justify-center gap-2 hover:opacity-95 shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-50"
-        >
-          {submitting ? (
-            <Loader2 size={16} className="animate-spin text-white" />
-          ) : (
-            <Sparkles size={16} className="text-white" />
-          )}
-          <span>Sign In as Piyush (1-Click Demo Candidate)</span>
-        </button>
-
-        <div className="flex items-center gap-3 my-4">
-          <div className="flex-1 h-px bg-black/[0.08] dark:bg-white/10" />
-          <span className="text-[10px] uppercase font-bold text-[var(--text-tertiary)] dark:text-zinc-400 tracking-wider">
-            Or continue with email
-          </span>
-          <div className="flex-1 h-px bg-black/[0.08] dark:bg-white/10" />
         </div>
 
         {/* Error Alert */}

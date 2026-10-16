@@ -1,7 +1,7 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
-import { Bell, Calendar, Trophy } from "lucide-react";
+import { useSyncExternalStore, useState, useEffect } from "react";
+import { Bell, Calendar, Trophy, Sun, Moon } from "lucide-react";
 import ProgressRing from "@/components/ui/ProgressRing";
 import StatCard from "@/components/ui/StatCard";
 import { useProgress } from "@/context/ProgressContext";
@@ -22,11 +22,13 @@ function ClientOnly({ children }) {
   return typeof children === "function" ? children(now) : children;
 }
 
-function ClientDate() {
+function ClientDate({ className = "" }) {
   return (
     <ClientOnly>
       {(now) => (
-        <div className="hidden sm:flex items-center gap-1.5 text-xs text-zinc-700 dark:text-zinc-300 font-semibold bg-white/70 dark:bg-white/[0.06] px-3 py-1.5 rounded-full border border-black/5 dark:border-white/10">
+        <div
+          className={`flex items-center gap-1.5 text-xs text-zinc-700 dark:text-zinc-300 font-semibold bg-white/70 dark:bg-white/[0.06] px-3 py-1.5 rounded-full border border-black/5 dark:border-white/10 whitespace-nowrap shadow-2xs ${className}`}
+        >
           <Calendar size={13} />
           <span>
             {now.toLocaleDateString("en-US", {
@@ -64,11 +66,39 @@ function ClientGreeting() {
 export default function DashboardHeader() {
   const { user, stats } = useProgress();
   const { unreadCount, setIsDrawerOpen } = useReminder();
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    const checkDark = () => {
+      setIsDarkMode(
+        document.documentElement.classList.contains("dark") ||
+        localStorage.getItem("mission90_theme") === "dark"
+      );
+    };
+    checkDark();
+
+    window.addEventListener("storage", checkDark);
+    return () => window.removeEventListener("storage", checkDark);
+  }, []);
+
+  const toggleDarkMode = () => {
+    const nextState = !isDarkMode;
+    setIsDarkMode(nextState);
+    if (typeof window !== "undefined") {
+      if (nextState) {
+        document.documentElement.classList.add("dark");
+        localStorage.setItem("mission90_theme", "dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+        localStorage.setItem("mission90_theme", "light");
+      }
+    }
+  };
 
   return (
     <div className="animate-fade-in-up">
-      {/* Top row — branding + bell (mobile only) */}
-      <div className="flex items-start justify-between mb-1 lg:hidden">
+      {/* Top row — branding + date + bell (mobile only) */}
+      <div className="flex items-center justify-between mb-2 lg:hidden">
         <div>
           <h1 className="text-xl font-bold tracking-tight">
             Mission <span className="text-[var(--accent)]">90</span>
@@ -77,24 +107,30 @@ export default function DashboardHeader() {
             Your 90-Day Placement Journey
           </p>
         </div>
-        <button
-          onClick={() => setIsDrawerOpen(true)}
-          className="relative w-10 h-10 rounded-full bg-white/60 dark:bg-white/[0.06] backdrop-blur flex items-center justify-center border border-black/[0.06] dark:border-white/10 hover:bg-white dark:hover:bg-white/[0.12] transition-all shadow-2xs"
-          aria-label="Daily Reminders & Notifications"
-          title="Daily Reminders & Notifications"
-        >
-          <Bell size={18} className="text-[var(--foreground)]" />
-          {unreadCount > 0 ? (
-            <span className="absolute -top-1 -right-1 px-1.5 py-0.5 min-w-4 text-[10px] font-bold bg-[var(--accent)] text-white rounded-full flex items-center justify-center shadow-xs">
-              {unreadCount}
-            </span>
-          ) : (
-            <span className="absolute top-2 right-2.5 w-2 h-2 bg-emerald-500 rounded-full" />
-          )}
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Real date pill before reminder bell */}
+          <ClientDate className="text-[11px] px-2.5 py-1" />
+
+          {/* Reminder Bell */}
+          <button
+            onClick={() => setIsDrawerOpen(true)}
+            className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/60 dark:bg-white/[0.06] backdrop-blur flex items-center justify-center border border-black/[0.06] dark:border-white/10 hover:bg-white dark:hover:bg-white/[0.12] transition-all shadow-2xs flex-shrink-0"
+            aria-label="Daily Reminders & Notifications"
+            title="Daily Reminders & Notifications"
+          >
+            <Bell size={18} className="text-[var(--foreground)]" />
+            {unreadCount > 0 ? (
+              <span className="absolute -top-1 -right-1 px-1.5 py-0.5 min-w-4 text-[10px] font-bold bg-[var(--accent)] text-white rounded-full flex items-center justify-center shadow-xs">
+                {unreadCount}
+              </span>
+            ) : (
+              <span className="absolute top-2 right-2.5 w-2 h-2 bg-emerald-500 rounded-full" />
+            )}
+          </button>
+        </div>
       </div>
 
-      {/* Welcome & Live Date */}
+      {/* Welcome, Live Date & Controls */}
       <div className="flex items-center justify-between mt-3 mb-4">
         <div>
           <ClientGreeting />
@@ -103,7 +139,37 @@ export default function DashboardHeader() {
           </h2>
         </div>
         <div className="flex items-center gap-2">
-          <ClientDate />
+          <ClientDate className="hidden lg:flex" />
+
+          {/* Theme Toggle Button */}
+          <button
+            type="button"
+            role="switch"
+            aria-checked={isDarkMode}
+            onClick={toggleDarkMode}
+            className="flex items-center gap-2 text-xs font-semibold text-[var(--foreground)] bg-white/60 dark:bg-white/[0.06] hover:bg-white dark:hover:bg-white/[0.12] px-2.5 py-1.5 rounded-full border border-black/[0.06] dark:border-white/10 transition-all shadow-2xs cursor-pointer select-none"
+            aria-label="Toggle dark mode"
+            title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {isDarkMode ? (
+              <Sun size={14} className="text-amber-400" />
+            ) : (
+              <Moon size={14} className="text-zinc-700 dark:text-zinc-300" />
+            )}
+            <div
+              className={`w-8 h-4.5 rounded-full relative transition-colors duration-200 p-0.5 ${
+                isDarkMode ? "bg-[var(--accent)]" : "bg-black/15 dark:bg-white/20"
+              }`}
+            >
+              <div
+                className={`w-3.5 h-3.5 rounded-full bg-white shadow-xs transition-transform duration-200 ${
+                  isDarkMode ? "translate-x-3.5" : "translate-x-0"
+                }`}
+              />
+            </div>
+          </button>
+
+          {/* Reminders Button */}
           <button
             onClick={() => setIsDrawerOpen(true)}
             className="hidden sm:flex relative items-center gap-1.5 text-xs font-semibold text-[var(--foreground)] bg-white/60 dark:bg-white/[0.06] hover:bg-white dark:hover:bg-white/[0.12] px-3 py-1.5 rounded-full border border-black/[0.06] dark:border-white/10 transition-all shadow-2xs cursor-pointer"

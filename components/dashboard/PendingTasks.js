@@ -58,7 +58,7 @@ export default function PendingTasks({ tasks: initialTasks = [] }) {
           <div>
             <p className="text-xs font-bold">All caught up!</p>
             <p className="text-[11px] text-emerald-700 dark:text-emerald-300">
-              Zero overdue tasks from previous study days. Excellent discipline!
+              No overdue tasks from previous days.
             </p>
           </div>
         </div>

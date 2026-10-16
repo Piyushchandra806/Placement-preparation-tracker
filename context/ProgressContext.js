@@ -142,35 +142,8 @@ export function ProgressProvider({ children }) {
     }
   }, [getHeaders]);
 
-  // Demo Login as canonical user Piyush (explicit user action)
-  const autoLoginDemoUser = useCallback(async () => {
-    try {
-      setIsAuthLoading(true);
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "same-origin",
-        body: JSON.stringify({ email: "piyush@mission90.com", password: "Password123!" }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setUser(data.user);
-        setIsAuthModalOpen(false);
-        setSuccessToast(`Signed in as demo candidate: ${data.user.name}`);
-        await refreshDashboard();
-      }
-    } catch (err) {
-      console.error("Auto login demo error:", err);
-    } finally {
-      setIsAuthLoading(false);
-      setIsLoading(false);
-    }
-  }, [refreshDashboard]);
-
   // Initial server-side session validation via HTTP-only cookie
   useEffect(() => {
-    let isMounted = true;
-
     async function checkSession() {
       setIsAuthLoading(true);
       try {
@@ -185,59 +158,26 @@ export function ProgressProvider({ children }) {
         });
         if (res.ok) {
           const data = await res.json();
-          if (isMounted && data.user) {
+          if (data?.user) {
             setUser(data.user);
             await refreshDashboard();
+          } else {
+            setUser(null);
           }
         } else {
-          // Check if user explicitly logged out in this session
-          const isExplicitLogout =
-            typeof window !== "undefined" &&
-            sessionStorage.getItem("mission90_logged_out") === "true";
-
-          if (!isExplicitLogout && isMounted) {
-            // Auto-sign in default candidate on local development for immediate dashboard viewing
-            try {
-              const loginRes = await fetch("/api/auth/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "same-origin",
-                body: JSON.stringify({
-                  email: "piyush@mission90.com",
-                  password: "Password123!",
-                }),
-              });
-              if (loginRes.ok) {
-                const loginData = await loginRes.json();
-                if (isMounted && loginData.user) {
-                  setUser(loginData.user);
-                  await refreshDashboard();
-                  return;
-                }
-              }
-            } catch (autoErr) {
-              console.warn("Auto demo login notice:", autoErr);
-            }
-          }
-          if (isMounted) setUser(null);
+          setUser(null);
         }
       } catch (err) {
         console.warn("Session check error:", err);
-        if (isMounted) setUser(null);
+        setUser(null);
       } finally {
-        if (isMounted) {
-          setIsAuthLoading(false);
-          setIsLoading(false);
-        }
+        setIsAuthLoading(false);
+        setIsLoading(false);
       }
     }
 
     checkSession();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []); // Run strictly once on mount
+  }, [refreshDashboard]);
 
   // Explicit Login action
   const login = useCallback(
@@ -339,6 +279,9 @@ export function ProgressProvider({ children }) {
     setTodayTasks([]);
     setPendingTasks([]);
     setSuccessToast("Logged out successfully");
+    if (typeof window !== "undefined") {
+      window.location.href = "/login";
+    }
   }, []);
 
   /**
@@ -572,7 +515,6 @@ export function ProgressProvider({ children }) {
       login,
       register,
       logout,
-      autoLoginDemoUser,
       stats,
       todayTasks,
       pendingTasks,
@@ -590,7 +532,6 @@ export function ProgressProvider({ children }) {
       login,
       register,
       logout,
-      autoLoginDemoUser,
       stats,
       todayTasks,
       pendingTasks,
