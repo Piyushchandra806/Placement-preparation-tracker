@@ -4,8 +4,9 @@ import Task from './Task';
 import DailyProgress from './DailyProgress';
 import ReminderSetting from './ReminderSetting';
 import InAppReminder from './InAppReminder';
+import VoiceRecording from './VoiceRecording';
 
-const models = { User, StudyPlan, Task, DailyProgress, ReminderSetting, InAppReminder };
+const models = { User, StudyPlan, Task, DailyProgress, ReminderSetting, InAppReminder, VoiceRecording };
 
-export { User, StudyPlan, Task, DailyProgress, ReminderSetting, InAppReminder };
+export { User, StudyPlan, Task, DailyProgress, ReminderSetting, InAppReminder, VoiceRecording };
 export default models;

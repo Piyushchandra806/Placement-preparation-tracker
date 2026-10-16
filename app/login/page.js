@@ -7,8 +7,9 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Lock, Mail, ArrowRight, ShieldCheck, AlertCircle, Loader2 } from "lucide-react";
+import { ArrowRight, ShieldCheck, AlertCircle, Loader2 } from "lucide-react";
 import { useProgress } from "@/context/ProgressContext";
+import { FloatingLabel } from "@/components/floating-label";
 
 function LoginForm() {
   const router = useRouter();
@@ -87,45 +88,38 @@ function LoginForm() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-[var(--text-secondary)] dark:text-zinc-300 mb-1.5">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail
-                  size={16}
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] dark:text-zinc-400"
-                />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  required
-                  className="w-full pl-10 pr-3.5 py-3 rounded-xl bg-black/[0.03] dark:bg-white/[0.07] border border-black/[0.08] dark:border-white/12 text-xs sm:text-sm text-[var(--foreground)] dark:text-white placeholder:text-[var(--text-tertiary)] dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all"
-                />
-              </div>
-            </div>
+            <FloatingLabel
+              label="Email address"
+              type="email"
+              name="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              validate={(val) => {
+                const trimmed = val.trim();
+                if (!trimmed) return "Enter your email address.";
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(trimmed)) {
+                  return "That doesn't look like an email address.";
+                }
+                return null;
+              }}
+              required
+            />
 
-            <div>
-              <label className="block text-xs font-semibold text-[var(--text-secondary)] dark:text-zinc-300 mb-1.5">
-                Password
-              </label>
-              <div className="relative">
-                <Lock
-                  size={16}
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] dark:text-zinc-400"
-                />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  className="w-full pl-10 pr-3.5 py-3 rounded-xl bg-black/[0.03] dark:bg-white/[0.07] border border-black/[0.08] dark:border-white/12 text-xs sm:text-sm text-[var(--foreground)] dark:text-white placeholder:text-[var(--text-tertiary)] dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all"
-                />
-              </div>
-            </div>
+            <FloatingLabel
+              label="Password"
+              type="password"
+              name="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              validate={(val) => {
+                if (!val) return "Enter your password.";
+                if (val.length < 6) return "Password must be at least 6 characters.";
+                return null;
+              }}
+              required
+            />
 
             {/* High-Contrast Sign In Button */}
             <button

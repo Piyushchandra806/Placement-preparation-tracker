@@ -40,6 +40,7 @@ import ProgressRing from "@/components/ui/ProgressRing";
 import AppShell from "@/components/layout/AppShell";
 import { COMPLETE_90_DAYS_CURRICULUM } from "@/lib/complete-90-days-syllabus";
 import { useProgress } from "@/context/ProgressContext";
+import VoiceSpeakingRecorder from "./VoiceSpeakingRecorder";
 
 export default function SubjectPageLayout({ subject }) {
   // Normalize subject identifier ('aptitude' -> 'quant')
@@ -94,23 +95,8 @@ export default function SubjectPageLayout({ subject }) {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showExplanation, setShowExplanation] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [speakingSeconds, setSpeakingSeconds] = useState(0);
   const [loading, setLoading] = useState(false);
   const [taskDbIds, setTaskDbIds] = useState({}); // map dayNumber -> mongo taskId
-
-  // Speech timer simulation
-  useEffect(() => {
-    let interval = null;
-    if (isRecording) {
-      interval = setInterval(() => {
-        setSpeakingSeconds((prev) => prev + 1);
-      }, 1000);
-    } else {
-      clearInterval(interval);
-    }
-    return () => clearInterval(interval);
-  }, [isRecording]);
 
   // Load progress from MongoDB
   useEffect(() => {
@@ -595,75 +581,14 @@ export default function SubjectPageLayout({ subject }) {
                 </div>
               )}
 
-              {/* Speaking Drill & Prompt (English Speaking) */}
+              {/* Speaking Drill & Real Voice Recording Simulation (English Speaking) */}
               {activeTask.exercise && activeTask.exercise.prompt && (
-                <div className="p-4 rounded-xl bg-white/70 dark:bg-white/[0.04] border border-black/5 dark:border-white/10 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold text-[var(--text-secondary)] dark:text-zinc-300 uppercase tracking-wide flex items-center gap-1.5">
-                      <Mic size={14} style={{ color: subject.accent }} />
-                      Daily Speaking Simulation
-                    </p>
-                    <span className="text-[11px] font-semibold text-[var(--text-secondary)] dark:text-zinc-400">
-                      Goal: 2 Minutes
-                    </span>
-                  </div>
-
-                  <div className="p-3 rounded-lg bg-black/[0.02] dark:bg-white/[0.04] border border-black/[0.04] dark:border-white/10">
-                    <p className="text-xs font-semibold text-[var(--text-secondary)] dark:text-zinc-400 mb-1">
-                      Speaking Prompt:
-                    </p>
-                    <p className="text-sm font-medium text-[var(--foreground)] italic">
-                      &quot;{activeTask.exercise.prompt}&quot;
-                    </p>
-                  </div>
-
-                  {/* Interactive Audio Simulator */}
-                  <div className="flex items-center justify-between pt-1">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          setIsRecording(!isRecording);
-                          if (!isRecording && speakingSeconds === 0) {
-                            setSpeakingSeconds(0);
-                          }
-                        }}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                          isRecording
-                            ? "bg-rose-500 text-white animate-pulse"
-                            : "bg-[var(--accent)] text-white hover:opacity-90 shadow-sm"
-                        }`}
-                      >
-                        {isRecording ? (
-                          <>
-                            <MicOff size={13} /> Stop Speaking
-                          </>
-                        ) : (
-                          <>
-                            <Mic size={13} /> Start Speaking Practice
-                          </>
-                        )}
-                      </button>
-
-                      {speakingSeconds > 0 && (
-                        <button
-                          onClick={() => {
-                            setIsRecording(false);
-                            setSpeakingSeconds(0);
-                          }}
-                          className="p-1.5 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--foreground)] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
-                          title="Reset Timer"
-                        >
-                          <RotateCcw size={14} />
-                        </button>
-                      )}
-                    </div>
-
-                    <span className="text-xs font-mono font-bold text-[var(--foreground)]">
-                      {Math.floor(speakingSeconds / 60)}:
-                      {String(speakingSeconds % 60).padStart(2, "0")}
-                    </span>
-                  </div>
-                </div>
+                <VoiceSpeakingRecorder
+                  day={selectedDay}
+                  subjectSlug={subjectSlug}
+                  prompt={activeTask.exercise.prompt}
+                  accentColor={subject.accent}
+                />
               )}
 
               {/* Completion Action Button */}

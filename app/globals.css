@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
+
 @variant dark (&:where(.dark, .dark *));
 
 :root {
@@ -36,6 +38,12 @@
 
   /* ── Bottom nav ── */
   --bottom-nav-height: 80px;
+
+  /* ── Shadcn tokens ── */
+  --border: rgba(0, 0, 0, 0.08);
+  --destructive: #e11d48;
+  --muted-foreground: #64748b;
+  --shadow-raised: 0 0 0 1px oklch(0 0 0 / 0.06), 0 1px 2px oklch(0 0 0 / 0.06), 0 6px 16px -6px oklch(0 0 0 / 0.12);
 }
 
 .dark,
@@ -62,15 +70,24 @@
   --glass-border-strong: rgba(255, 255, 255, 0.16);
   --glass-shadow: 0 4px 24px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
   --glass-shadow-lg: 0 12px 48px rgba(0, 0, 0, 0.7), 0 2px 4px rgba(0, 0, 0, 0.5);
+
+  /* ── Dark Shadcn tokens ── */
+  --border: rgba(255, 255, 255, 0.12);
+  --destructive: #fb7185;
+  --muted-foreground: #a1a1aa;
 }
 
 @theme inline {
   --color-background: var(--bg-warm);
   --color-foreground: var(--foreground);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-light: var(--accent-light);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --shadow-raised: var(--shadow-raised);
 }
 
 /* ── Base ── */
@@ -402,4 +419,8 @@ body {
   .main-content {
     padding-bottom: calc(var(--bottom-nav-height) + 16px);
   }
+}
+
+.dark {
+  --shadow-raised: 0 0 0 1px oklch(1 0 0 / 0.08), 0 1px 2px oklch(0 0 0 / 0.4), 0 6px 16px -6px oklch(0 0 0 / 0.6);
 }
