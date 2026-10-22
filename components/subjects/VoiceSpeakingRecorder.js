@@ -353,7 +353,10 @@ export default function VoiceSpeakingRecorder({
     : 0;
 
   return (
-    <div className="p-4 rounded-2xl bg-white/70 dark:bg-white/[0.04] border border-black/5 dark:border-white/10 space-y-4">
+    <div
+      id="voice-practice-recorder"
+      className="p-4 rounded-2xl bg-white/70 dark:bg-white/[0.04] border border-black/5 dark:border-white/10 space-y-4 transition-all duration-300"
+    >
       {/* Header */}
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold text-[var(--text-secondary)] dark:text-zinc-300 uppercase tracking-wide flex items-center gap-1.5">

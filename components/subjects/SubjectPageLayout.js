@@ -41,6 +41,8 @@ import AppShell from "@/components/layout/AppShell";
 import { COMPLETE_90_DAYS_CURRICULUM } from "@/lib/complete-90-days-syllabus";
 import { useProgress } from "@/context/ProgressContext";
 import VoiceSpeakingRecorder from "./VoiceSpeakingRecorder";
+import FullSampleAnswerSection from "./FullSampleAnswerSection";
+import { getEnglishSampleAnswer } from "@/lib/english-sample-answers";
 
 export default function SubjectPageLayout({ subject }) {
   // Normalize subject identifier ('aptitude' -> 'quant')
@@ -95,8 +97,15 @@ export default function SubjectPageLayout({ subject }) {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showExplanation, setShowExplanation] = useState(false);
+  const [showFullAnswer, setShowFullAnswer] = useState(false);
   const [loading, setLoading] = useState(false);
   const [taskDbIds, setTaskDbIds] = useState({}); // map dayNumber -> mongo taskId
+
+  // Reset answer toggles when switching days or subjects
+  useEffect(() => {
+    setShowExplanation(false);
+    setShowFullAnswer(false);
+  }, [selectedDay, subjectSlug]);
 
   // Load progress from MongoDB
   useEffect(() => {
@@ -205,6 +214,51 @@ export default function SubjectPageLayout({ subject }) {
       {}
     );
   }, [subjectSyllabus, selectedDay]);
+
+  // Full ready-to-speak answer for English speaking practice
+  const sampleAnswer = useMemo(() => {
+    if (subjectSlug === "english" || (activeTask.exercise && activeTask.exercise.prompt)) {
+      return getEnglishSampleAnswer({
+        prompt: activeTask.exercise?.prompt,
+        day: selectedDay,
+        topic: activeTask.topic,
+      });
+    }
+    return null;
+  }, [subjectSlug, activeTask, selectedDay]);
+
+  const handleToggleExplanation = () => {
+    setShowExplanation((prev) => {
+      const next = !prev;
+      if (next) {
+        // When opening solution, also expand full ready-to-speak answer
+        setShowFullAnswer(true);
+      }
+      return next;
+    });
+  };
+
+  const handleToggleFullAnswer = () => {
+    setShowFullAnswer((prev) => {
+      const next = !prev;
+      if (next && !showExplanation) {
+        // Keep original answer key and explanation available
+        setShowExplanation(true);
+      }
+      return next;
+    });
+  };
+
+  const handleScrollToRecorder = () => {
+    const el = document.getElementById("voice-practice-recorder");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("ring-2", "ring-[var(--accent)]", "ring-offset-2", "ring-offset-black/20");
+      setTimeout(() => {
+        el.classList.remove("ring-2", "ring-[var(--accent)]", "ring-offset-2", "ring-offset-black/20");
+      }, 2000);
+    }
+  };
 
   const isCurrentDayCompleted = effectiveCompletedDays.has(selectedDay);
 
@@ -530,8 +584,9 @@ export default function SubjectPageLayout({ subject }) {
                       Practice Drill &amp; Verification
                     </p>
                     <button
-                      onClick={() => setShowExplanation((prev) => !prev)}
-                      className="text-xs font-semibold text-[var(--accent)] flex items-center gap-1 hover:underline"
+                      onClick={handleToggleExplanation}
+                      className="text-xs font-semibold text-[var(--accent)] flex items-center gap-1 hover:underline cursor-pointer"
+                      id="toggle-solution-btn"
                     >
                       {showExplanation ? (
                         <>
@@ -577,6 +632,17 @@ export default function SubjectPageLayout({ subject }) {
                         {activeTask.exercise.explanation}
                       </p>
                     </div>
+                  )}
+
+                  {/* Full Sample Answer — Speak Along (English Speaking) */}
+                  {sampleAnswer && (
+                    <FullSampleAnswerSection
+                      sampleAnswer={sampleAnswer}
+                      showFullAnswer={showFullAnswer}
+                      onToggleFullAnswer={handleToggleFullAnswer}
+                      accentColor={subject.accent}
+                      onStartPractice={handleScrollToRecorder}
+                    />
                   )}
                 </div>
               )}
