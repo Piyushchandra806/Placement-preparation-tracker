@@ -41,6 +41,7 @@ import AppShell from "@/components/layout/AppShell";
 import { COMPLETE_90_DAYS_CURRICULUM } from "@/lib/complete-90-days-syllabus";
 import { useProgress } from "@/context/ProgressContext";
 import LearnBasicEnglishSection from "./LearnBasicEnglishSection";
+import InteractiveMCQExercise from "./InteractiveMCQExercise";
 
 export default function SubjectPageLayout({ subject }) {
   // Normalize subject identifier ('aptitude' -> 'quant')
@@ -98,10 +99,13 @@ export default function SubjectPageLayout({ subject }) {
   const [loading, setLoading] = useState(false);
   const [taskDbIds, setTaskDbIds] = useState({}); // map dayNumber -> mongo taskId
 
-  // Reset answer toggles when switching days or subjects
-  useEffect(() => {
+  // Reset answer toggles when switching days or subjects (React 19 render-time adjustment)
+  const currentSelectionKey = `${selectedDay}-${subjectSlug}`;
+  const [prevSelectionKey, setPrevSelectionKey] = useState(currentSelectionKey);
+  if (prevSelectionKey !== currentSelectionKey) {
+    setPrevSelectionKey(currentSelectionKey);
     setShowExplanation(false);
-  }, [selectedDay, subjectSlug]);
+  }
 
   // Load progress from MongoDB
   useEffect(() => {
@@ -538,67 +542,20 @@ export default function SubjectPageLayout({ subject }) {
                   </div>
                 )}
 
-              {/* Practice Exercise & Answer Key (Quant / Reasoning only - excluded from English Speaking) */}
-              {subjectSlug !== "english" &&
-                activeTask.exercise &&
-                activeTask.exercise.question && (
-                  <div className="p-4 rounded-xl bg-white/70 dark:bg-white/[0.04] border border-black/5 dark:border-white/10 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs font-semibold text-[var(--text-secondary)] dark:text-zinc-300 uppercase tracking-wide flex items-center gap-1.5">
-                        <Sparkles size={13} style={{ color: subject.accent }} />
-                        Practice Drill &amp; Verification
-                      </p>
-                      <button
-                        onClick={handleToggleExplanation}
-                        className="text-xs font-semibold text-[var(--accent)] flex items-center gap-1 hover:underline cursor-pointer"
-                        id="toggle-solution-btn"
-                      >
-                        {showExplanation ? (
-                          <>
-                            <EyeOff size={13} /> Hide Solution
-                          </>
-                        ) : (
-                          <>
-                            <Eye size={13} /> View Answer &amp; Explanation
-                          </>
-                        )}
-                      </button>
-                    </div>
-
-                    <p className="text-sm font-semibold text-[var(--foreground)] leading-relaxed">
-                      {activeTask.exercise.question}
-                    </p>
-
-                    {/* Options */}
-                    {activeTask.exercise.options &&
-                      activeTask.exercise.options.length > 0 && (
-                        <div className="grid grid-cols-2 gap-2 pt-1">
-                          {activeTask.exercise.options.map((opt, i) => (
-                            <div
-                              key={i}
-                              className="text-xs font-medium p-2.5 rounded-lg bg-black/[0.02] dark:bg-white/[0.06] border border-black/[0.04] dark:border-white/10 text-[var(--foreground)] flex items-center gap-2"
-                            >
-                              <span className="w-5 h-5 rounded-full bg-black/[0.05] dark:bg-white/10 flex items-center justify-center font-bold text-[10px] text-[var(--foreground)]">
-                                {String.fromCharCode(65 + i)}
-                              </span>
-                              <span className="truncate">{opt}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                    {/* Expandable Explanation & Answer Key */}
-                    {showExplanation && (
-                      <div className="p-3.5 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/50 border border-emerald-200/50 dark:border-emerald-800/50 text-xs space-y-1.5 animate-fade-in">
-                        <p className="font-bold text-emerald-800 dark:text-emerald-300">
-                          Answer Key: {activeTask.exercise.answerKey}
-                        </p>
-                        <p className="text-emerald-900 dark:text-emerald-200 leading-relaxed">
-                          {activeTask.exercise.explanation}
-                        </p>
-                      </div>
-                    )}
-                  </div>
+              {/* Practice Exercise & Answer Key with Instant Verification */}
+              {activeTask.exercise &&
+                activeTask.exercise.question &&
+                (subjectSlug !== "english" ||
+                  (activeTask.exercise.options &&
+                    activeTask.exercise.options.length > 0)) && (
+                  <InteractiveMCQExercise
+                    key={activeTask._id || `${selectedDay}-${subjectSlug}`}
+                    exercise={activeTask.exercise}
+                    questionId={activeTask._id || `${selectedDay}-${subjectSlug}`}
+                    accentColor={subject.accent}
+                    showExplanation={showExplanation}
+                    onToggleExplanation={handleToggleExplanation}
+                  />
                 )}
 
               {/* Completion Action Button */}

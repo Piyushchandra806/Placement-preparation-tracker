@@ -16,5 +16,9 @@ function subscribe(onChange) {
 }
 
 export function useReducedMotion() {
-  return useSyncExternalStore(subscribe, () => window.matchMedia(query).matches, () => false);
+  return useSyncExternalStore(
+    subscribe,
+    () => window.matchMedia(query).matches,
+    () => false,
+  );
 }

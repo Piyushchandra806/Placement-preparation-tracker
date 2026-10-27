@@ -37,7 +37,7 @@ export default function AppShell({ children }) {
 
       {/* Main content area */}
       <main className="lg:ml-[var(--sidebar-width)] main-content">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 lg:py-8">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 lg:py-8 pb-28 lg:pb-32">
           {isAuthLoading ? (
             <div className="flex flex-col items-center justify-center min-h-[55vh] text-center p-8 animate-fade-in">
               <div className="w-12 h-12 rounded-2xl bg-[var(--accent-bg)] text-[var(--accent)] flex items-center justify-center mb-3 shadow-2xs">
